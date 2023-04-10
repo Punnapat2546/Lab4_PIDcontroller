@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "arm_math.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,19 +47,20 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 uint32_t QEIReadRaw;
-int32_t current_position;
-uint32_t setPosition;
+float count_encoder_round;
+float current_position;
+float setPosition;
 
 uint32_t duty;
 uint32_t Duty_A;
 uint32_t Duty_B;
 
-uint32_t kp;
-uint32_t ki;
-uint32_t kd;
-int32_t output_pid;
-
-int32_t error_position;
+arm_pid_instance_f32 PID = {0};
+float output_pid;
+uint32_t settlingstate;
+uint32_t settling_c;
+ uint32_t settling_l;
+ uint32_t settling_ll;
 
 /* USER CODE END PV */
 
@@ -71,7 +72,6 @@ static void MX_TIM1_Init(void);
 static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 void PositionUpdate();
-void PIDController();
 void DriveMotor();
 /* USER CODE END PFP */
 
@@ -114,15 +114,14 @@ int main(void)
   /* USER CODE BEGIN 2 */
 HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_1|TIM_CHANNEL_2);
 
-//HAL_TIM_Base_Start(&htim1);
-//HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-//HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+HAL_TIM_Base_Start(&htim1);
+HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
 
-
-
-	kp = 1;
-	ki = 0;
-	kd = 0;
+PID.Kp = 3;
+PID.Ki = 0.000001;
+PID.Kd = 25;
+arm_pid_init_f32(&PID, 0);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -132,16 +131,32 @@ HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_1|TIM_CHANNEL_2);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
-//	  static uint32_t timestamp = 0;
-//	  if (HAL_GetTick() >= timestamp) {
-//		timestamp = HAL_GetTick() + 1000;
+	  static uint32_t timestamp = 0;
+	  if (HAL_GetTick() >= timestamp) {
+		timestamp = HAL_GetTick() + 10; //100,000Hz
 
 		  PositionUpdate();
-		  PIDController();
-//		  DriveMotor();
 
-//	}
+//		  output_pid = arm_pid_f32(&PID, setPosition - current_position);
+
+			  float errorpos = setPosition - current_position;
+
+			  if (-0.1 <= errorpos && errorpos <= 0.1) settling_c = 1;
+			  else settling_c = 0;
+			  settling_ll = settling_l;
+			  settling_l = settling_c;
+
+			  if (settling_c == 1 && settling_l == 1 && settling_ll == 1) settlingstate = 1;
+
+			  static float setPosition_l;
+			  if (setPosition != setPosition_l) settlingstate = 0;
+			  setPosition_l = setPosition;
+
+			  if (settlingstate == 1)	output_pid = 0;
+			  else if (settlingstate == 0)	output_pid = arm_pid_f32(&PID, setPosition - current_position);
+
+		  DriveMotor();
+	}
 
   }
   /* USER CODE END 3 */
@@ -393,7 +408,6 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void PositionUpdate()
 {
-	static int32_t count_encoder_round = 0;
 	static uint32_t QEIReadRaw_l;
 	QEIReadRaw = __HAL_TIM_GET_COUNTER(&htim3);
 	if (QEIReadRaw_l < 100 && QEIReadRaw > 3000) {
@@ -403,21 +417,7 @@ void PositionUpdate()
 		count_encoder_round++;
 	}
 	QEIReadRaw_l = QEIReadRaw;
-	current_position = (count_encoder_round * 360) + (QEIReadRaw * 360 / 3072);
-}
-
-void PIDController()
-{
-	error_position = setPosition - current_position;
-	static int32_t error_position_l = 0;
-	uint32_t time_c = HAL_GetTick();
-	static uint32_t time_l = 0;
-	uint32_t time_diff = (time_c - time_l) * 1000;
-//
-//	output_pid = (kp * error_position) + (ki * (error_position + (error_position_l * time_diff))) + (kd * ((error_position - error_position_l) / time_diff));
-//
-	error_position_l = error_position;
-	time_l = time_c;
+	current_position = (count_encoder_round * 360) + (((float)QEIReadRaw) * 360 / 3072);
 }
 
 void DriveMotor()
@@ -430,13 +430,15 @@ void DriveMotor()
 	else if (output_pid > 0)
 	{
 		Duty_B = 0;
-		if (output_pid <= 100) Duty_A = output_pid;
+		if (output_pid < 25) Duty_A = 25;
+		else if (output_pid <= 100) Duty_A = output_pid;
 		else Duty_A = 100;
 	}
 	else if (output_pid < 0)
 	{
 		Duty_A = 0;
-		if (output_pid >= -100) Duty_B = -(output_pid);
+		if (output_pid > -25) Duty_B = 25;
+		else if (output_pid >= -100) Duty_B = -(output_pid);
 		else Duty_B = 100;
 	}
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, Duty_A);
