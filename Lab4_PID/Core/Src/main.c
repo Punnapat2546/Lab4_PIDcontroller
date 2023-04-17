@@ -93,7 +93,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -136,12 +136,14 @@ arm_pid_init_f32(&PID, 0);
 		timestamp = HAL_GetTick() + 10; //100,000Hz
 
 		  PositionUpdate();
+//			__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 100);
+//			__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, Duty_B);
 
 //		  output_pid = arm_pid_f32(&PID, setPosition - current_position);
 
 			  float errorpos = setPosition - current_position;
 
-			  if (-0.1 <= errorpos && errorpos <= 0.1) settling_c = 1;
+			  if (-0.15 <= errorpos && errorpos <= 0.15) settling_c = 1;
 			  else settling_c = 0;
 			  settling_ll = settling_l;
 			  settling_l = settling_c;

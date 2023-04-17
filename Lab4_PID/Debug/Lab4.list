@@ -787,7 +787,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+HAL_Init();
  800096e:	f000 fd6b 	bl	8001448 <HAL_Init>
   /* USER CODE BEGIN Init */
 
@@ -864,6 +864,8 @@ arm_pid_init_f32(&PID, 0);
 
 		  PositionUpdate();
  80009d8:	f000 fac4 	bl	8000f64 <PositionUpdate>
+//			__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 100);
+//			__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, Duty_B);
 
 //		  output_pid = arm_pid_f32(&PID, setPosition - current_position);
 
@@ -875,7 +877,7 @@ arm_pid_init_f32(&PID, 0);
  80009e8:	ee77 7a67 	vsub.f32	s15, s14, s15
  80009ec:	edc7 7a03 	vstr	s15, [r7, #12]
 
-			  if (-0.1 <= errorpos && errorpos <= 0.1) settling_c = 1;
+			  if (-0.15 <= errorpos && errorpos <= 0.15) settling_c = 1;
  80009f0:	68f8      	ldr	r0, [r7, #12]
  80009f2:	f7ff fd55 	bl	80004a0 <__aeabi_f2d>
  80009f6:	a348      	add	r3, pc, #288	; (adr r3, 8000b18 <main+0x1b0>)
@@ -1026,10 +1028,10 @@ arm_pid_init_f32(&PID, 0);
  8000b10:	e755      	b.n	80009be <main+0x56>
  8000b12:	bf00      	nop
  8000b14:	f3af 8000 	nop.w
- 8000b18:	9999999a 	.word	0x9999999a
- 8000b1c:	bfb99999 	.word	0xbfb99999
- 8000b20:	9999999a 	.word	0x9999999a
- 8000b24:	3fb99999 	.word	0x3fb99999
+ 8000b18:	33333333 	.word	0x33333333
+ 8000b1c:	bfc33333 	.word	0xbfc33333
+ 8000b20:	33333333 	.word	0x33333333
+ 8000b24:	3fc33333 	.word	0x3fc33333
  8000b28:	20000070 	.word	0x20000070
  8000b2c:	20000028 	.word	0x20000028
  8000b30:	20000114 	.word	0x20000114
