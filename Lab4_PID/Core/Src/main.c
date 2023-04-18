@@ -50,6 +50,8 @@ uint32_t QEIReadRaw;
 float count_encoder_round;
 float current_position;
 float setPosition;
+float setPos;
+
 
 uint32_t duty;
 uint32_t Duty_A;
@@ -61,6 +63,8 @@ uint32_t settlingstate;
 uint32_t settling_c;
  uint32_t settling_l;
  uint32_t settling_ll;
+ uint32_t settling_lll;
+ uint32_t settling_llll;
 
 /* USER CODE END PV */
 
@@ -119,7 +123,7 @@ HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
 
 PID.Kp = 3;
-PID.Ki = 0.000001;
+PID.Ki = 0.00000105;
 PID.Kd = 25;
 arm_pid_init_f32(&PID, 0);
   /* USER CODE END 2 */
@@ -135,20 +139,30 @@ arm_pid_init_f32(&PID, 0);
 	  if (HAL_GetTick() >= timestamp) {
 		timestamp = HAL_GetTick() + 10; //100,000Hz
 
-		  PositionUpdate();
+		  	  PositionUpdate();
 //			__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 100);
 //			__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, Duty_B);
 
 //		  output_pid = arm_pid_f32(&PID, setPosition - current_position);
 
+		  	  static float setPosition_ll;
+		  	  if (0 <= setPos && setPos <= 3600) {
+				setPosition = setPos;
+			} else {
+				setPosition = setPosition_ll;
+			}
+		  	  setPosition_ll = setPosition;
+
 			  float errorpos = setPosition - current_position;
 
-			  if (-0.15 <= errorpos && errorpos <= 0.15) settling_c = 1;
+			  if (-0.5 <= errorpos && errorpos <= 0.5) settling_c = 1;
 			  else settling_c = 0;
+			  settling_llll = settling_lll;
+			  settling_lll = settling_ll;
 			  settling_ll = settling_l;
 			  settling_l = settling_c;
 
-			  if (settling_c == 1 && settling_l == 1 && settling_ll == 1) settlingstate = 1;
+			  if (settling_c == 1 && settling_l == 1 && settling_ll == 1 && settling_lll == 1 && settling_llll == 1) settlingstate = 1;
 
 			  static float setPosition_l;
 			  if (setPosition != setPosition_l) settlingstate = 0;
@@ -432,14 +446,14 @@ void DriveMotor()
 	else if (output_pid > 0)
 	{
 		Duty_B = 0;
-		if (output_pid < 25) Duty_A = 25;
+		if (output_pid < 22) Duty_A = 22;
 		else if (output_pid <= 100) Duty_A = output_pid;
 		else Duty_A = 100;
 	}
 	else if (output_pid < 0)
 	{
 		Duty_A = 0;
-		if (output_pid > -25) Duty_B = 25;
+		if (output_pid > -22) Duty_B = 22;
 		else if (output_pid >= -100) Duty_B = -(output_pid);
 		else Duty_B = 100;
 	}
