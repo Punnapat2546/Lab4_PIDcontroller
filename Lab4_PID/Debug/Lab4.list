@@ -409,11 +409,11 @@ PID.Kp = 3;
  8000518:	4b72      	ldr	r3, [pc, #456]	; (80006e4 <main+0x208>)
  800051a:	4a73      	ldr	r2, [pc, #460]	; (80006e8 <main+0x20c>)
  800051c:	619a      	str	r2, [r3, #24]
-PID.Ki = 0.00000105;
+PID.Ki = 0.000001064418;
  800051e:	4b71      	ldr	r3, [pc, #452]	; (80006e4 <main+0x208>)
  8000520:	4a72      	ldr	r2, [pc, #456]	; (80006ec <main+0x210>)
  8000522:	61da      	str	r2, [r3, #28]
-PID.Kd = 25;
+PID.Kd = 19.5;
  8000524:	4b6f      	ldr	r3, [pc, #444]	; (80006e4 <main+0x208>)
  8000526:	4a72      	ldr	r2, [pc, #456]	; (80006f0 <main+0x214>)
  8000528:	621a      	str	r2, [r3, #32]
@@ -447,7 +447,7 @@ arm_pid_init_f32(&PID, 0);
 //		  output_pid = arm_pid_f32(&PID, setPosition - current_position);
 
 		  	  static float setPosition_ll;
-		  	  if (0 <= setPos && setPos <= 3600) {
+		  	  if (0 <= setPos && setPos <= 36000) {
  8000550:	4b69      	ldr	r3, [pc, #420]	; (80006f8 <main+0x21c>)
  8000552:	edd3 7a00 	vldr	s15, [r3]
  8000556:	eef5 7ac0 	vcmpe.f32	s15, #0.0
@@ -486,14 +486,14 @@ arm_pid_init_f32(&PID, 0);
  800059a:	ee77 7a67 	vsub.f32	s15, s14, s15
  800059e:	edc7 7a03 	vstr	s15, [r7, #12]
 
-			  if (-0.5 <= errorpos && errorpos <= 0.5) settling_c = 1;
+			  if (-1 <= errorpos && errorpos <= 1) settling_c = 1;
  80005a2:	edd7 7a03 	vldr	s15, [r7, #12]
- 80005a6:	eebe 7a00 	vmov.f32	s14, #224	; 0xbf000000 -0.5
+ 80005a6:	eebf 7a00 	vmov.f32	s14, #240	; 0xbf800000 -1.0
  80005aa:	eef4 7ac7 	vcmpe.f32	s15, s14
  80005ae:	eef1 fa10 	vmrs	APSR_nzcv, fpscr
  80005b2:	db0c      	blt.n	80005ce <main+0xf2>
  80005b4:	edd7 7a03 	vldr	s15, [r7, #12]
- 80005b8:	eeb6 7a00 	vmov.f32	s14, #96	; 0x3f000000  0.5
+ 80005b8:	eeb7 7a00 	vmov.f32	s14, #112	; 0x3f800000  1.0
  80005bc:	eef4 7ac7 	vcmpe.f32	s15, s14
  80005c0:	eef1 fa10 	vmrs	APSR_nzcv, fpscr
  80005c4:	d803      	bhi.n	80005ce <main+0xf2>
@@ -651,11 +651,11 @@ arm_pid_init_f32(&PID, 0);
  80006e0:	20000028 	.word	0x20000028
  80006e4:	20000118 	.word	0x20000118
  80006e8:	40400000 	.word	0x40400000
- 80006ec:	358cedba 	.word	0x358cedba
- 80006f0:	41c80000 	.word	0x41c80000
+ 80006ec:	358edd20 	.word	0x358edd20
+ 80006f0:	419c0000 	.word	0x419c0000
  80006f4:	20000158 	.word	0x20000158
  80006f8:	2000010c 	.word	0x2000010c
- 80006fc:	45610000 	.word	0x45610000
+ 80006fc:	470ca000 	.word	0x470ca000
  8000700:	20000108 	.word	0x20000108
  8000704:	2000015c 	.word	0x2000015c
  8000708:	20000104 	.word	0x20000104
@@ -2148,12 +2148,12 @@ void SystemInit(void)
  8000fb8:	e000ed00 	.word	0xe000ed00
 
 08000fbc <Reset_Handler>:
+*/
 
     .section  .text.Reset_Handler
   .weak  Reset_Handler
   .type  Reset_Handler, %function
-Reset_Handler:  
-  ldr   sp, =_estack    		 /* set stack pointer */
+Reset_Handler:    ldr   sp, =_estack    		 /* set stack pointer */
  8000fbc:	f8df d034 	ldr.w	sp, [pc, #52]	; 8000ff4 <LoopFillZerobss+0x12>
 
 /* Copy the data segment initializers from flash to SRAM */  
@@ -2225,7 +2225,7 @@ LoopFillZerobss:
  8000fee:	f7ff fa75 	bl	80004dc <main>
   bx  lr    
  8000ff2:	4770      	bx	lr
-  ldr   sp, =_estack    		 /* set stack pointer */
+Reset_Handler:    ldr   sp, =_estack    		 /* set stack pointer */
  8000ff4:	20020000 	.word	0x20020000
   ldr r0, =_sdata
  8000ff8:	20000000 	.word	0x20000000

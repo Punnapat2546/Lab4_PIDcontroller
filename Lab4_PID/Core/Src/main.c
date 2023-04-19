@@ -123,8 +123,8 @@ HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
 
 PID.Kp = 3;
-PID.Ki = 0.00000105;
-PID.Kd = 25;
+PID.Ki = 0.000001064418;
+PID.Kd = 19.5;
 arm_pid_init_f32(&PID, 0);
   /* USER CODE END 2 */
 
@@ -146,7 +146,7 @@ arm_pid_init_f32(&PID, 0);
 //		  output_pid = arm_pid_f32(&PID, setPosition - current_position);
 
 		  	  static float setPosition_ll;
-		  	  if (0 <= setPos && setPos <= 3600) {
+		  	  if (0 <= setPos && setPos <= 36000) {
 				setPosition = setPos;
 			} else {
 				setPosition = setPosition_ll;
@@ -155,7 +155,7 @@ arm_pid_init_f32(&PID, 0);
 
 			  float errorpos = setPosition - current_position;
 
-			  if (-0.5 <= errorpos && errorpos <= 0.5) settling_c = 1;
+			  if (-1 <= errorpos && errorpos <= 1) settling_c = 1;
 			  else settling_c = 0;
 			  settling_llll = settling_lll;
 			  settling_lll = settling_ll;
